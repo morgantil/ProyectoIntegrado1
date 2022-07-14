@@ -1,5 +1,5 @@
 
-export interface Alumno {
+export class Alumno {
     nombre: string;
     apellido: string;
     dni: number;

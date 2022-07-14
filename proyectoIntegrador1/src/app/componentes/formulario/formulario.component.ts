@@ -1,6 +1,9 @@
 import { HttpClient } from '@angular/common/http';
+import { ThisReceiver } from '@angular/compiler';
+import { localizedString } from '@angular/compiler/src/output/output_ast';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { MatTableDataSource } from '@angular/material/table';
 import { Alumno } from 'src/app/Interfaces/AlumnoInterface';
 
 @Component({
@@ -11,10 +14,10 @@ import { Alumno } from 'src/app/Interfaces/AlumnoInterface';
 
 export class FormularioComponent implements OnInit {
   
-  displayedColumns: string[] = ['nombre', 'apellido', 'dni','email','nota'];
+  displayedColumns: string[] = ['nombre', 'apellido', 'dni','email','nota','eliminar','editar'];
 
   formEstudiante:FormGroup;
-  listaAlumnos:Alumno[] = [];
+  listaAlumnos = new MatTableDataSource<Alumno>();
   
 
   constructor(private fb:FormBuilder, private http:HttpClient) { }
@@ -26,8 +29,9 @@ export class FormularioComponent implements OnInit {
     
     this.http.get<Alumno[]>('assets/JsonDatos.json').subscribe (data =>{
       console.log(data);
-      this.listaAlumnos=data;
+      this.listaAlumnos.data=data;
     })
+    console.log(this.listaAlumnos.data.length);
   }
   
   //Metodo de Crea,Inicializa y AgregaValida los inputs
@@ -36,9 +40,9 @@ export class FormularioComponent implements OnInit {
     this.formEstudiante = this.fb.group({
       nombre  : ['', [ Validators.required, Validators.minLength(5) ]  ],
       apellido: ['', [Validators.required,Validators.minLength(5)] ],
-      dni  : ['', [ Validators.required,Validators.max(8)]],
+      dni  : ['', [ Validators.required,Validators.maxLength(8),Validators.pattern("^[0-9]*$")]],
       email  : ['', [ Validators.required,Validators.email]],
-      nota  : ['', [ Validators.required,Validators.max(2)]],
+      nota  : ['', [ Validators.required,Validators.pattern("^[0-9]*$")]],
     });
   }
 
@@ -66,37 +70,70 @@ export class FormularioComponent implements OnInit {
   }
 
     //Metodo de Crea,Inicializa y AgregaValida los inputs
-    crearFormulario2(){
+    
    
-      this.formEstudiante = this.fb.group({
-        nombre  : ['', [ Validators.required, Validators.minLength(5) ]  ],
-        apellido: ['', [Validators.required,Validators.minLength(5)] ],
-        dni  : ['', [ Validators.required,Validators.max(8)]],
-        email  : ['', [ Validators.required,Validators.email]],
-        nota  : ['', [ Validators.required,Validators.max(2)]],
-      });
-    }
-  
+     
 
 
   //Probando como obtener los valores de los forumarios
   
 agregarAlumno(){
-  debugger;
-  let alumno:Alumno;
+
+
+  let editar = false;
+  let alumno= new Alumno();
+
+  let listaAuxiliar = this.listaAlumnos.data;
+  
 
   alumno.nombre=this.formEstudiante.get('nombre').value;
   alumno.apellido=this.formEstudiante.get('apellido').value;
   alumno.dni=this.formEstudiante.get('dni').value;
   alumno.email=this.formEstudiante.get('email').value;
   alumno.nota=this.formEstudiante.get('nota').value;
-  console.log(alumno);
-  this.listaAlumnos.push(alumno);
+
+ for (const element of listaAuxiliar) {
+   if(element.dni == alumno.dni){
+    element.nombre = alumno.nombre;
+    element.apellido = alumno.apellido;
+    element.dni= alumno.dni;
+    element.email= alumno.email;
+    element.nota = alumno.nota
+    editar=true;
+   }
+ }
+if(editar==false){
+  listaAuxiliar.push(alumno);
+}
+  this.listaAlumnos.data = listaAuxiliar;
+this.formEstudiante.reset();
+}
+
+editarAlumno(element){
+
+//  this.formEstudiante = this.fb.group({
+ //   nombre  : [element.nombre, [ Validators.required, Validators.minLength(5) ]  ],
+  //  apellido: [element.apellido, [Validators.required,Validators.minLength(5)] ],
+   // dni  : [element.dni, [ Validators.required,Validators.maxLength(8),Validators.pattern("^[0-9]*$")]],
+    //email  : [element.email, [ Validators.required,Validators.email]],
+    //nota  : [element.nota, [ Validators.required,Validators.pattern("^[0-9]*$")]],
+ // });
+
+ this.formEstudiante.setValue(element);
+  
+}
+
+
+eliminarAlumno(element){
+
+console.log(JSON.stringify(this.listaAlumnos.data));
+let listaAuxiliar2=this.listaAlumnos.data;
+let lis = listaAuxiliar2.filter(data => data.dni != element.dni );
+this.listaAlumnos.data=lis;
+
 
 
 }
 
 
-
 }
-
